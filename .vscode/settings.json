@@ -1,0 +1,12 @@
+{
+  "files.associations": {
+    "stdint.h": "c",
+    "platform_f103.h": "c",
+    "string.h": "c",
+    "w25qxx.h": "c",
+    "usb_device.h": "c",
+    "radio_tx.h": "c",
+    "sx1278.h": "c"
+  },
+  "cmake.configureOnOpen": false
+}
