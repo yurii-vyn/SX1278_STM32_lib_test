@@ -1,7 +1,7 @@
 #ifndef _RADIO_TX_H_
 #define _RADIO_TX_H_
 
-#define RADIO_TX_TASK_PERIOD    500
+#define RADIO_TX_TASK_PERIOD    200
 
 #define SX1278_NSS_GPIO_Port    GPIOA
 #define SX1278_NSS_Pin          GPIO_PIN_4
@@ -14,6 +14,9 @@
 #define SX1278_TIMEOUT_MS       500
 #define SX1278_STATUS_OK        1
 #define SX1278_STATUS_ERROR     0
+
+#define RADIO_TX_TEST_ENABLED   1
+#define RADIO_TX_TEST_DISABLED  0
 
 // LoRa parameters
 #define SX1278_FREQ             465000000               // center frequency
@@ -42,5 +45,10 @@ uint8_t radio_tx_get_sf(void);
 uint8_t radio_tx_get_cr(void);
 uint8_t radio_tx_get_crc(void);
 uint8_t radio_tx_get_bw(void);
+
+void radio_tx_test_enable(void);
+void radio_tx_test_disable(void);
+
+uint8_t radio_tx_custom_msg(uint8_t* msg, uint8_t len);
 
 #endif // _RADIO_TX_H_

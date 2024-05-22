@@ -21,6 +21,8 @@ uint32_t      radio_task_timer = 0;
 uint8_t       task_status = SX1278_STATUS_ERROR;
 uint8_t       radio_txrx_len = 0;
 
+uint8_t       radio_test_tx_enable = RADIO_TX_TEST_DISABLED;
+
 /**
  * SX1278 initialization
  * 
@@ -60,19 +62,29 @@ uint8_t radio_init(void)
   return radio_status;
 }
 
+void radio_tx_test_enable(void)
+{
+  radio_test_tx_enable = RADIO_TX_TEST_ENABLED;
+}
+
+void radio_tx_test_disable(void)
+{
+  radio_test_tx_enable = RADIO_TX_TEST_DISABLED;
+}
+
 /**
  * Transmit test message 
 */
 uint8_t radio_tx_test_transmit(uint32_t sys_tick_ms)
 {
-  uint8_t tx_len = 0;
-
-  // tx_len = sprintf((char*)radio_txrx_buffer, "Test message...");
-  memset(radio_txrx_buffer, 0x00, SX1278_PACKET_LEN);
-  tx_len = sprintf((char*)radio_txrx_buffer, "T:%lu\r\n", sys_tick_ms);
-  if(tx_len <= SX1278_PACKET_LEN){
-    // radio_status = SX1278_LoRaTxPacket(&SX1278, radio_txrx_buffer, tx_len, SX1278_TIMEOUT_MS);
-    radio_status = SX1278_transmit(&SX1278, radio_txrx_buffer, tx_len, SX1278_TIMEOUT_MS);
+  if(radio_test_tx_enable == RADIO_TX_TEST_ENABLED){
+    // radio_txrx_len = sprintf((char*)radio_txrx_buffer, "Test message...");
+    memset(radio_txrx_buffer, 0x00, SX1278_PACKET_LEN);
+    radio_txrx_len = sprintf((char*)radio_txrx_buffer, "T:%lu\r\n", sys_tick_ms);
+    if(radio_txrx_len <= SX1278_PACKET_LEN){
+      // radio_status = SX1278_LoRaTxPacket(&SX1278, radio_txrx_buffer, tx_len, SX1278_TIMEOUT_MS);
+      radio_status = SX1278_transmit(&SX1278, radio_txrx_buffer, radio_txrx_len, SX1278_TIMEOUT_MS);
+    }
   }
 
   return radio_status;
@@ -155,4 +167,11 @@ uint8_t radio_tx_get_crc(void)
 uint8_t radio_tx_get_bw(void)
 {
   return SX1278.LoRa_BW;
+}
+
+uint8_t radio_tx_custom_msg(uint8_t* msg, uint8_t len)
+{
+  radio_status = SX1278_transmit(&SX1278, msg, len, SX1278_TIMEOUT_MS);
+
+  return radio_status;
 }
