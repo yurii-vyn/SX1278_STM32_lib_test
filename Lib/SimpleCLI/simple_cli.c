@@ -4,6 +4,7 @@
 #include "usb_helpers.h"
 #include "lib_led.h"
 #include "W25Qxx.h"
+#include "SX1278.h"
 #include "radio_tx.h"
 
 
@@ -267,7 +268,7 @@ static scli_pres_t scli_process_data(uint8_t* msg, param_id_t param_id, uint16_t
     msg_entx_handler(msg[SCLI_POS_CMD], data);
     break;
   case SCLI_PARAM_ID_CUSTOM_TX:
-    if(data_len < UINT8_MAX){
+    if((data_len < UINT8_MAX) && (data_len < SX1278_MAX_PACKET)){
       uint8_t data_len_tmp = 0;
       data_len_tmp += data_len;
       msg_custom_tx_handler(msg[SCLI_POS_CMD], (uint8_t*)(msg+SCLI_HEADER_LEN+1), data_len_tmp);

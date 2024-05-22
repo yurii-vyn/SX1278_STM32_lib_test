@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "SX1278_hw.h"
 
-#define SX1278_MAX_PACKET					64
+#define SX1278_MAX_PACKET					14
 #define SX1278_DEFAULT_TIMEOUT		3000
 
 //RFM98 Internal registers Address
