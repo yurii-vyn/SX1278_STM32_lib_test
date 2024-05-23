@@ -4,6 +4,7 @@
 #include "usb_helpers.h"
 #include "lib_led.h"
 #include "W25Qxx.h"
+#include "SX1278.h"
 #include "radio_tx.h"
 
 
@@ -20,6 +21,8 @@ const scli_param_t scli_param_list[SCLI_PARAM_ID_CNT] = {
   {.id = SCLI_PARAM_ID_CODRATE,       .name = "CRT"},
   {.id = SCLI_PARAM_ID_CRC,           .name = "CRC"},
   {.id = SCLI_PARAM_ID_BANDWIDTH,     .name = "BDW"},
+  {.id = SCLI_PARAM_ID_ENTTX,         .name = "ETT"},
+  {.id = SCLI_PARAM_ID_CUSTOM_TX,     .name = "CTX"},
 };
 
 extern uint8_t usb_rx_buffer[APP_RX_DATA_SIZE];
@@ -46,6 +49,8 @@ static void msg_sf_handler(uint8_t cmd, int data);
 static void msg_cr_handler(uint8_t cmd, int data);
 static void msg_crc_handler(uint8_t cmd, int data);
 static void msg_bw_handler(uint8_t cmd, int data);
+static void msg_entx_handler(uint8_t cmd, int data);
+static void msg_custom_tx_handler(uint8_t cmd, uint8_t* data, uint8_t len);
 
 #ifdef USE_SPI_FLASH
 static void msg_flash_handler(uint8_t cmd, int data);
@@ -216,7 +221,7 @@ static param_id_t scli_get_param_id(uint8_t* msg_param)
 
 static scli_pres_t scli_process_data(uint8_t* msg, param_id_t param_id, uint16_t data_len)
 {
-  UNUSED(data_len);
+  // UNUSED(data_len);
   scli_pres_t result = SCLI_PRES_OK;
   int data = 0;
 
@@ -258,6 +263,18 @@ static scli_pres_t scli_process_data(uint8_t* msg, param_id_t param_id, uint16_t
     break;
   case SCLI_PARAM_ID_BANDWIDTH:
     msg_bw_handler(msg[SCLI_POS_CMD], data);
+    break;
+  case SCLI_PARAM_ID_ENTTX:
+    msg_entx_handler(msg[SCLI_POS_CMD], data);
+    break;
+  case SCLI_PARAM_ID_CUSTOM_TX:
+    if((data_len < UINT8_MAX) && (data_len < SX1278_MAX_PACKET)){
+      uint8_t data_len_tmp = 0;
+      data_len_tmp += data_len;
+      msg_custom_tx_handler(msg[SCLI_POS_CMD], (uint8_t*)(msg+SCLI_HEADER_LEN+1), data_len_tmp);
+    }else{
+      cdc_msg_print("Error: Message is too long\r\n");
+    }
     break;
   default:
     result = SCLI_PRES_ERROR;
@@ -416,9 +433,31 @@ static void msg_crc_handler(uint8_t cmd, int data)
 static void msg_bw_handler(uint8_t cmd, int data)
 {
   if(cmd == SCLI_SET){
-    radio_tx_set_bw((uint8_t)data);
-    cdc_msg_print("BW set: %d\r\n", (uint8_t)data);
+    radio_tx_set_bw((uint16_t)data);
+    cdc_msg_print("BW set: %d\r\n", data);
   }else if( cmd == SCLI_GET){
     cdc_msg_print("SX1278 BW: %d\r\n", radio_tx_get_bw());
+  }
+}
+
+static void msg_entx_handler(uint8_t cmd, int data)
+{
+  if(cmd == SCLI_SET){
+    if(data == 1){
+      radio_tx_test_enable();
+    }else if(data == 0){
+      radio_tx_test_disable();
+    }
+  }else if(cmd == SCLI_GET){
+
+  }
+}
+
+static void msg_custom_tx_handler(uint8_t cmd, uint8_t* data, uint8_t len)
+{
+  if(cmd == SCLI_SET){
+    radio_tx_custom_msg(data, len);
+  }else if(cmd == SCLI_GET){
+
   }
 }

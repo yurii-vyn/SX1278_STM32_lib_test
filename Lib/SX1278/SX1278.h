@@ -234,7 +234,7 @@ void SX1278_set_bw(SX1278_t *module, uint8_t bw);
 void SX1278_set_cr(SX1278_t *module, uint8_t cr);
 void SX1278_set_crc(SX1278_t *module, uint8_t crc_en);
 void SX1278_set_sync_word(SX1278_t *module, uint8_t s_word);
-void SX1278_phy_config(SX1278_t *module);
+void SX1278_modem_config(SX1278_t *module);
 void SX1278_config(SX1278_t *module);
 void SX1278_enableLoRa(SX1278_t *module);
 void SX1278_clearLoRaIrq(SX1278_t *module);

@@ -21,6 +21,8 @@ uint32_t      radio_task_timer = 0;
 uint8_t       task_status = SX1278_STATUS_ERROR;
 uint8_t       radio_txrx_len = 0;
 
+uint8_t       radio_test_tx_enable = RADIO_TX_TEST_DISABLED;
+
 /**
  * SX1278 initialization
  * 
@@ -60,19 +62,29 @@ uint8_t radio_init(void)
   return radio_status;
 }
 
+void radio_tx_test_enable(void)
+{
+  radio_test_tx_enable = RADIO_TX_TEST_ENABLED;
+}
+
+void radio_tx_test_disable(void)
+{
+  radio_test_tx_enable = RADIO_TX_TEST_DISABLED;
+}
+
 /**
  * Transmit test message 
 */
 uint8_t radio_tx_test_transmit(uint32_t sys_tick_ms)
 {
-  uint8_t tx_len = 0;
-
-  // tx_len = sprintf((char*)radio_txrx_buffer, "Test message...");
-  memset(radio_txrx_buffer, 0x00, SX1278_PACKET_LEN);
-  tx_len = sprintf((char*)radio_txrx_buffer, "T:%lu\r\n", sys_tick_ms);
-  if(tx_len <= SX1278_PACKET_LEN){
-    // radio_status = SX1278_LoRaTxPacket(&SX1278, radio_txrx_buffer, tx_len, SX1278_TIMEOUT_MS);
-    radio_status = SX1278_transmit(&SX1278, radio_txrx_buffer, tx_len, SX1278_TIMEOUT_MS);
+  if(radio_test_tx_enable == RADIO_TX_TEST_ENABLED){
+    // radio_txrx_len = sprintf((char*)radio_txrx_buffer, "Test message...");
+    memset(radio_txrx_buffer, 0x00, SX1278_PACKET_LEN);
+    radio_txrx_len = sprintf((char*)radio_txrx_buffer, "T:%lu\r\n", sys_tick_ms);
+    if(radio_txrx_len <= SX1278_PACKET_LEN){
+      // radio_status = SX1278_LoRaTxPacket(&SX1278, radio_txrx_buffer, tx_len, SX1278_TIMEOUT_MS);
+      radio_status = SX1278_transmit(&SX1278, radio_txrx_buffer, radio_txrx_len, SX1278_TIMEOUT_MS);
+    }
   }
 
   return radio_status;
@@ -112,24 +124,79 @@ void radio_tx_set_frequency(uint64_t freq)
   SX1278_set_frequency(&SX1278, freq);
 }
 
-void radio_tx_set_sf(uint8_t sf)
+void radio_tx_set_sf(uint8_t data_in)
 {
-  SX1278_set_sf(&SX1278, sf);
+  if((data_in >= RADIO_SF_MIN) && (data_in <= RADIO_SF_MAX)){
+    SX1278_set_sf(&SX1278, (data_in - RADIO_SF_MIN));   // if data_in == 6 (spreading factor 6), set index to 0; 7-1, 8-2, ...
+  }else{
+    cdc_msg_print("ERROR: SF OOR\r\n"); // error
+  }
 }
 
-void radio_tx_set_cr(uint8_t cr)
+void radio_tx_set_cr(uint8_t data_in)
 {
-  SX1278_set_cr(&SX1278, cr);
+  if((data_in >= RADIO_CR_MIN) && (data_in <= RADIO_CR_MAX)){
+    SX1278_set_cr(&SX1278, (data_in - RADIO_CR_MIN));
+  }else{
+    cdc_msg_print("ERROR: CR OOR\r\n"); // error
+  }
 }
 
 void radio_tx_set_crc(uint8_t crc)
 {
-  SX1278_set_crc(&SX1278,  crc);
+  if((crc == 0) || (crc == 1)){
+    SX1278_set_crc(&SX1278,  crc);
+  }else{
+    cdc_msg_print("ERROR: CRC OOR\r\n"); // error
+  }
 }
 
-void radio_tx_set_bw(uint8_t bw)
+void radio_tx_set_bw(uint16_t data_in)
 {
-  SX1278_set_bw(&SX1278, bw);
+  uint8_t bw = 0;
+  uint8_t bw_valid = 1;
+
+  switch(data_in)
+  {
+  case RADIO_BW_7KHZ:
+    bw = SX1278_LORA_BW_7_8KHZ;
+    break;
+  case RADIO_BW_10KHZ:
+    bw = SX1278_LORA_BW_10_4KHZ;
+    break;
+  case RADIO_BW_15KHZ:
+    bw = SX1278_LORA_BW_15_6KHZ;
+    break;
+  case RADIO_BW_20KHZ:
+    bw = SX1278_LORA_BW_20_8KHZ;
+    break;
+  case RADIO_BW_31KHZ:
+    bw = SX1278_LORA_BW_31_2KHZ;
+    break;
+  case RADIO_BW_41KHZ:
+    bw = SX1278_LORA_BW_41_7KHZ;
+    break;
+  case RADIO_BW_62KHZ:
+    bw = SX1278_LORA_BW_62_5KHZ;
+    break;
+  case RADIO_BW_125KHZ:
+    bw = SX1278_LORA_BW_125KHZ;
+    break;
+  case RADIO_BW_250KHZ:
+    bw = SX1278_LORA_BW_250KHZ;
+    break;
+  case RADIO_BW_500KHZ:
+    bw = SX1278_LORA_BW_500KHZ;
+    break;
+  default:
+    bw_valid = 0;
+    cdc_msg_print("ERROR: BW OOR\r\n"); // error
+    break;
+  }
+
+  if(bw_valid == 1){
+    SX1278_set_bw(&SX1278, bw);
+  }
 }
 
 uint64_t radio_tx_get_frequency(void)
@@ -155,4 +222,11 @@ uint8_t radio_tx_get_crc(void)
 uint8_t radio_tx_get_bw(void)
 {
   return SX1278.LoRa_BW;
+}
+
+uint8_t radio_tx_custom_msg(uint8_t* msg, uint8_t len)
+{
+  radio_status = SX1278_transmit(&SX1278, msg, len, SX1278_TIMEOUT_MS);
+
+  return radio_status;
 }
