@@ -116,7 +116,7 @@ void SX1278_set_sf(SX1278_t *module, uint8_t sf)
 	module->LoRa_SF = sf;
 
 	SX1278_sleep(module); 																			// enter sleep mode before writing anything to registers
-	SX1278_phy_config(module);
+	SX1278_modem_config(module);
 	SX1278_standby(module);																			// go back to satandby
 }
 
@@ -128,7 +128,7 @@ void SX1278_set_bw(SX1278_t *module, uint8_t bw)
 	module->LoRa_BW = bw;
 
 	SX1278_sleep(module); 																			// enter sleep mode before writing anything to registers
-	SX1278_phy_config(module);
+	SX1278_modem_config(module);
 	SX1278_standby(module);																			// go back to satandby
 }
 
@@ -140,7 +140,7 @@ void SX1278_set_cr(SX1278_t *module, uint8_t cr)
 	module->LoRa_CR = cr;
 
 	SX1278_sleep(module); 																			// enter sleep mode before writing anything to registers
-	SX1278_phy_config(module);
+	SX1278_modem_config(module);
 	SX1278_standby(module);																			// go back to satandby
 }
 
@@ -152,7 +152,7 @@ void SX1278_set_crc(SX1278_t *module, uint8_t crc_en)
 	module->LoRa_CRC_sum = crc_en;
 
 	SX1278_sleep(module); 																			// enter sleep mode before writing anything to registers
-	SX1278_phy_config(module);
+	SX1278_modem_config(module);
 	SX1278_standby(module);																			// go back to satandby
 }
 
@@ -169,9 +169,9 @@ void SX1278_set_sync_word(SX1278_t *module, uint8_t s_word)
 }
 
 /**
- * \brief Write modem phy config registers (1-3)
+ * \brief Write modem modem config registers (1-3)
 */
-void SX1278_phy_config(SX1278_t *module)
+void SX1278_modem_config(SX1278_t *module)
 {
 	if (SX1278_SpreadFactor[module->LoRa_SF] == 6) {	// SFactor=6
 		uint8_t tmp;
@@ -233,7 +233,7 @@ void SX1278_config(SX1278_t *module)
 	SX1278_SPIWrite(module, LR_RegOcp, 0x0B);			// RegOcp, Close Ocp
 	SX1278_SPIWrite(module, LR_RegLna, 0x23);			// RegLNA, High & LNA Enable
 	
-	SX1278_phy_config(module);
+	SX1278_modem_config(module);
 
 	SX1278_SPIWrite(module, LR_RegSymbTimeoutLsb, 0x08); 		// RegSymbTimeoutLsb Timeout = 0x3FF(Max)
 	SX1278_SPIWrite(module, LR_RegPreambleMsb, 		0x00); 		// RegPreambleMsb

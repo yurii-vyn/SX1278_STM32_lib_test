@@ -124,24 +124,79 @@ void radio_tx_set_frequency(uint64_t freq)
   SX1278_set_frequency(&SX1278, freq);
 }
 
-void radio_tx_set_sf(uint8_t sf)
+void radio_tx_set_sf(uint8_t data_in)
 {
-  SX1278_set_sf(&SX1278, sf);
+  if((data_in >= RADIO_SF_MIN) && (data_in <= RADIO_SF_MAX)){
+    SX1278_set_sf(&SX1278, (data_in - RADIO_SF_MIN));   // if data_in == 6 (spreading factor 6), set index to 0; 7-1, 8-2, ...
+  }else{
+    cdc_msg_print("ERROR: SF OOR\r\n"); // error
+  }
 }
 
-void radio_tx_set_cr(uint8_t cr)
+void radio_tx_set_cr(uint8_t data_in)
 {
-  SX1278_set_cr(&SX1278, cr);
+  if((data_in >= RADIO_CR_MIN) && (data_in <= RADIO_CR_MAX)){
+    SX1278_set_cr(&SX1278, (data_in - RADIO_CR_MIN));
+  }else{
+    cdc_msg_print("ERROR: CR OOR\r\n"); // error
+  }
 }
 
 void radio_tx_set_crc(uint8_t crc)
 {
-  SX1278_set_crc(&SX1278,  crc);
+  if((crc == 0) || (crc == 1)){
+    SX1278_set_crc(&SX1278,  crc);
+  }else{
+    cdc_msg_print("ERROR: CRC OOR\r\n"); // error
+  }
 }
 
-void radio_tx_set_bw(uint8_t bw)
+void radio_tx_set_bw(uint16_t data_in)
 {
-  SX1278_set_bw(&SX1278, bw);
+  uint8_t bw = 0;
+  uint8_t bw_valid = 1;
+
+  switch(data_in)
+  {
+  case RADIO_BW_7KHZ:
+    bw = SX1278_LORA_BW_7_8KHZ;
+    break;
+  case RADIO_BW_10KHZ:
+    bw = SX1278_LORA_BW_10_4KHZ;
+    break;
+  case RADIO_BW_15KHZ:
+    bw = SX1278_LORA_BW_15_6KHZ;
+    break;
+  case RADIO_BW_20KHZ:
+    bw = SX1278_LORA_BW_20_8KHZ;
+    break;
+  case RADIO_BW_31KHZ:
+    bw = SX1278_LORA_BW_31_2KHZ;
+    break;
+  case RADIO_BW_41KHZ:
+    bw = SX1278_LORA_BW_41_7KHZ;
+    break;
+  case RADIO_BW_62KHZ:
+    bw = SX1278_LORA_BW_62_5KHZ;
+    break;
+  case RADIO_BW_125KHZ:
+    bw = SX1278_LORA_BW_125KHZ;
+    break;
+  case RADIO_BW_250KHZ:
+    bw = SX1278_LORA_BW_250KHZ;
+    break;
+  case RADIO_BW_500KHZ:
+    bw = SX1278_LORA_BW_500KHZ;
+    break;
+  default:
+    bw_valid = 0;
+    cdc_msg_print("ERROR: BW OOR\r\n"); // error
+    break;
+  }
+
+  if(bw_valid == 1){
+    SX1278_set_bw(&SX1278, bw);
+  }
 }
 
 uint64_t radio_tx_get_frequency(void)

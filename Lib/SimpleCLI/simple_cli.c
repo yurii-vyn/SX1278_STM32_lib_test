@@ -433,8 +433,8 @@ static void msg_crc_handler(uint8_t cmd, int data)
 static void msg_bw_handler(uint8_t cmd, int data)
 {
   if(cmd == SCLI_SET){
-    radio_tx_set_bw((uint8_t)data);
-    cdc_msg_print("BW set: %d\r\n", (uint8_t)data);
+    radio_tx_set_bw((uint16_t)data);
+    cdc_msg_print("BW set: %d\r\n", data);
   }else if( cmd == SCLI_GET){
     cdc_msg_print("SX1278 BW: %d\r\n", radio_tx_get_bw());
   }
