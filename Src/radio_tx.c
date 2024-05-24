@@ -116,18 +116,25 @@ void radio_rx_idle_task(uint32_t sys_tick_ms)
       cdc_msg_print("%s", radio_txrx_buffer);
       // task_status = SX1278_LoRaSetRxMode(&SX1278, SX1278_PACKET_LEN, SX1278_TIMEOUT_MS);
     }
+    task_status = SX1278_LoRaSetRxMode(&SX1278, SX1278_PACKET_LEN, SX1278_TIMEOUT_MS);
   }
 }
 
 void radio_tx_set_frequency(uint64_t freq)
 {
   SX1278_set_frequency(&SX1278, freq);
+#ifdef RADIO_MODE_RX
+  radio_status = SX1278_LoRaSetRxMode(&SX1278, SX1278_PACKET_LEN, SX1278_TIMEOUT_MS);
+#endif
 }
 
 void radio_tx_set_sf(uint8_t data_in)
 {
   if((data_in >= RADIO_SF_MIN) && (data_in <= RADIO_SF_MAX)){
     SX1278_set_sf(&SX1278, (data_in - RADIO_SF_MIN));   // if data_in == 6 (spreading factor 6), set index to 0; 7-1, 8-2, ...
+#ifdef RADIO_MODE_RX
+    radio_status = SX1278_LoRaSetRxMode(&SX1278, SX1278_PACKET_LEN, SX1278_TIMEOUT_MS);
+#endif
   }else{
     cdc_msg_print("ERROR: SF OOR\r\n"); // error
   }
@@ -137,6 +144,9 @@ void radio_tx_set_cr(uint8_t data_in)
 {
   if((data_in >= RADIO_CR_MIN) && (data_in <= RADIO_CR_MAX)){
     SX1278_set_cr(&SX1278, (data_in - RADIO_CR_MIN));
+#ifdef RADIO_MODE_RX
+    radio_status = SX1278_LoRaSetRxMode(&SX1278, SX1278_PACKET_LEN, SX1278_TIMEOUT_MS);
+#endif
   }else{
     cdc_msg_print("ERROR: CR OOR\r\n"); // error
   }
@@ -146,6 +156,9 @@ void radio_tx_set_crc(uint8_t crc)
 {
   if((crc == 0) || (crc == 1)){
     SX1278_set_crc(&SX1278,  crc);
+#ifdef RADIO_MODE_RX
+    radio_status = SX1278_LoRaSetRxMode(&SX1278, SX1278_PACKET_LEN, SX1278_TIMEOUT_MS);
+#endif
   }else{
     cdc_msg_print("ERROR: CRC OOR\r\n"); // error
   }
@@ -196,6 +209,9 @@ void radio_tx_set_bw(uint16_t data_in)
 
   if(bw_valid == 1){
     SX1278_set_bw(&SX1278, bw);
+#ifdef RADIO_MODE_RX
+    radio_status = SX1278_LoRaSetRxMode(&SX1278, SX1278_PACKET_LEN, SX1278_TIMEOUT_MS);
+#endif
   }
 }
 
@@ -234,6 +250,9 @@ uint8_t radio_tx_custom_msg(uint8_t* msg, uint8_t len)
 void radio_tx_set_fhss_period(uint8_t period)
 {
   SX1278_set_fhss_period(&SX1278, period);
+#ifdef RADIO_MODE_RX
+  radio_status = SX1278_LoRaSetRxMode(&SX1278, SX1278_PACKET_LEN, SX1278_TIMEOUT_MS);
+#endif
 }
 
 uint8_t radio_tx_get_fhss_period(void)
