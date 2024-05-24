@@ -213,6 +213,7 @@ typedef struct {
 	uint8_t LoRa_CRC_sum;
 	uint8_t preamble;
 	uint8_t sync_word;
+  uint8_t FHSS_period;
 	uint8_t packetLength;
 
 	SX1278_Status_t status;
@@ -234,6 +235,7 @@ void SX1278_set_bw(SX1278_t *module, uint8_t bw);
 void SX1278_set_cr(SX1278_t *module, uint8_t cr);
 void SX1278_set_crc(SX1278_t *module, uint8_t crc_en);
 void SX1278_set_sync_word(SX1278_t *module, uint8_t s_word);
+void SX1278_set_fhss_period(SX1278_t *module, uint8_t period);
 void SX1278_modem_config(SX1278_t *module);
 void SX1278_config(SX1278_t *module);
 void SX1278_enableLoRa(SX1278_t *module);
@@ -244,7 +246,7 @@ int SX1278_LoRaSetTxMode(SX1278_t *module, uint8_t length, uint32_t timeout);
 int SX1278_LoRaTxPacket(SX1278_t *module, uint8_t *txBuf, uint8_t length, uint32_t timeout);
 void SX1278_init(SX1278_t *module, uint64_t frequency, uint8_t power,
 		uint8_t LoRa_SF, uint8_t LoRa_BW, uint8_t LoRa_CR,
-		uint8_t LoRa_CRC_sum, uint8_t preambleLength, uint8_t sync_w, uint8_t packetLength);
+		uint8_t LoRa_CRC_sum, uint8_t preambleLength, uint8_t sync_w, uint8_t fhss_period, uint8_t packetLength);
 int SX1278_transmit(SX1278_t *module, uint8_t *txBuf, uint8_t length, uint32_t timeout);
 int SX1278_receive(SX1278_t *module, uint8_t length, uint32_t timeout);
 uint8_t SX1278_available(SX1278_t *module);

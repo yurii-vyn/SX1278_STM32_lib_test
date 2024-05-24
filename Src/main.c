@@ -24,7 +24,7 @@ int main(void)
   W25Q_Reset();
 #endif
 
-  HAL_Delay(2000);
+  // HAL_Delay(2000);
 
   radio_init();
 

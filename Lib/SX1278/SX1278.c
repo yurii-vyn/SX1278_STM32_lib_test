@@ -168,6 +168,15 @@ void SX1278_set_sync_word(SX1278_t *module, uint8_t s_word)
 	SX1278_standby(module);																			// go back to satandby
 }
 
+void SX1278_set_fhss_period(SX1278_t *module, uint8_t period)
+{
+  module->FHSS_period = period;
+
+  SX1278_sleep(module); 
+  SX1278_SPIWrite(module, LR_RegHopPeriod, period);
+  SX1278_standby(module);	
+}
+
 /**
  * \brief Write modem modem config registers (1-3)
 */
@@ -311,17 +320,17 @@ int SX1278_LoRaSetRxMode(SX1278_t *module, uint8_t length, uint32_t timeout) {
 
 	module->packetLength = length;
 
-	// SX1278_config(module);		//Setting base parameter
-	SX1278_SPIWrite(module, REG_LR_PADAC, 0x84);	//Normal and RX
-	SX1278_SPIWrite(module, LR_RegHopPeriod, 0xFF);	//No FHSS
-	SX1278_SPIWrite(module, REG_LR_DIOMAPPING1, 0x01);//DIO=00,DIO1=00,DIO2=00, DIO3=01
-	SX1278_SPIWrite(module, LR_RegIrqFlagsMask, 0x3F);//Open RxDone interrupt & Timeout
+	// SX1278_config(module);		                                      // Set base parameters
+	SX1278_SPIWrite(module, REG_LR_PADAC, 0x84);	                    // Normal and RX
+	SX1278_SPIWrite(module, LR_RegHopPeriod, module->FHSS_period);	  // Set FHSS period
+	SX1278_SPIWrite(module, REG_LR_DIOMAPPING1, 0x01);                // DIO=00, DIO1=00, DIO2=00, DIO3=01
+	SX1278_SPIWrite(module, LR_RegIrqFlagsMask, 0x3F);                // Open RxDone interrupt & Timeout
 	SX1278_clearLoRaIrq(module);
-	SX1278_SPIWrite(module, LR_RegPayloadLength, length);//Payload Length 21byte(this register must difine when the data long of one byte in SF is 6)
-	addr = SX1278_SPIRead(module, LR_RegFifoRxBaseAddr); //Read RxBaseAddr
-	SX1278_SPIWrite(module, LR_RegFifoAddrPtr, addr); //RxBaseAddr->FiFoAddrPtr
-	SX1278_SPIWrite(module, LR_RegOpMode, 0x8d);	//Mode//Low Frequency Mode
-	//SX1278_SPIWrite(module, LR_RegOpMode,0x05);	//Continuous Rx Mode //High Frequency Mode
+	SX1278_SPIWrite(module, LR_RegPayloadLength, length);             // Payload Length
+	addr = SX1278_SPIRead(module, LR_RegFifoRxBaseAddr);              // Read RxBaseAddr
+	SX1278_SPIWrite(module, LR_RegFifoAddrPtr, addr);                 // RxBaseAddr->FiFoAddrPtr
+	SX1278_SPIWrite(module, LR_RegOpMode, 0x8d);	                    // Mode // Low Frequency Mode
+	//SX1278_SPIWrite(module, LR_RegOpMode,0x05);	                    // Continuous Rx Mode // High Frequency Mode
 	module->readBytes = 0;
 
 	while (1) {
@@ -388,16 +397,16 @@ int SX1278_LoRaSetTxMode(SX1278_t *module, uint8_t length, uint32_t timeout) {
 	uint8_t temp = 0;
 
 	module->packetLength = length;
-	// SX1278_config(module);                             // set base parameters
-	SX1278_SPIWrite(module, REG_LR_PADAC, 0x87);	        // Tx for 20dBm 0x87
-	SX1278_SPIWrite(module, LR_RegHopPeriod, 0x00);       // RegHopPeriod NO FHSS
-	SX1278_SPIWrite(module, REG_LR_DIOMAPPING1, 0x41);    // DIO0=01, DIO1=00,DIO2=00, DIO3=01
+	// SX1278_config(module);                                         // set base parameters
+	SX1278_SPIWrite(module, REG_LR_PADAC, 0x87);	                    // Tx for 20dBm 0x87
+	SX1278_SPIWrite(module, LR_RegHopPeriod, module->FHSS_period);    // RegHopPeriod
+	SX1278_SPIWrite(module, REG_LR_DIOMAPPING1, 0x41);                // DIO0=01, DIO1=00, DIO2=00, DIO3=01
 	SX1278_clearLoRaIrq(module);
-	SX1278_SPIWrite(module, LR_RegIrqFlagsMask, 0xF7);    // Open TxDone interrupt
-	SX1278_SPIWrite(module, LR_RegPayloadLength, length); // RegPayloadLength 21byte
-	addr = SX1278_SPIRead(module, LR_RegFifoTxBaseAddr);  // RegFiFoTxBaseAddr
+	SX1278_SPIWrite(module, LR_RegIrqFlagsMask, 0xF7);                // Open TxDone interrupt
+	SX1278_SPIWrite(module, LR_RegPayloadLength, length);             // RegPayloadLength 21byte
+	addr = SX1278_SPIRead(module, LR_RegFifoTxBaseAddr);              // RegFiFoTxBaseAddr
   module->fifo_addr = addr;
-	SX1278_SPIWrite(module, LR_RegFifoAddrPtr, addr);     // RegFifoAddrPtr
+	SX1278_SPIWrite(module, LR_RegFifoAddrPtr, addr);                 // RegFifoAddrPtr
 
 	while (1) {
 		temp = SX1278_SPIRead(module, LR_RegPayloadLength);
@@ -466,7 +475,8 @@ int SX1278_LoRaTxPacket(SX1278_t *module, uint8_t *txBuffer, uint8_t length, uin
  */
 void SX1278_init(SX1278_t *module, uint64_t frequency, uint8_t power,
 									uint8_t LoRa_SF, uint8_t LoRa_BW, uint8_t LoRa_CR,
-									uint8_t LoRa_CRC_sum, uint8_t preambleLength, uint8_t sync_w, uint8_t packetLength)
+									uint8_t LoRa_CRC_sum, uint8_t preambleLength, 
+                  uint8_t sync_w, uint8_t fhss_period, uint8_t packetLength)
 {
 	SX1278_hw_init(module->hw);
 	module->frequency = frequency;
@@ -477,6 +487,7 @@ void SX1278_init(SX1278_t *module, uint64_t frequency, uint8_t power,
 	module->LoRa_CRC_sum = LoRa_CRC_sum;
 	module->preamble = (uint8_t)(preambleLength-4);
 	module->sync_word = sync_w;
+  module->FHSS_period = fhss_period;
 	module->packetLength = packetLength;
 	SX1278_config(module);
 }

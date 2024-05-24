@@ -10,19 +10,20 @@
 
 
 const scli_param_t scli_param_list[SCLI_PARAM_ID_CNT] = {
-  {.id = SCLI_PARAM_ID_LED_MODE,      .name = "LMD"},
-  {.id = SCLI_PARAM_ID_LED_PERIOD,    .name = "LPR"},
-  {.id = SCLI_PARAM_ID_TIME,          .name = "TIM"},
-  {.id = SCLI_PARAM_ID_VERSION,       .name = "VER"},
-  {.id = SCLI_PARAM_ID_DEBUG_ENABLE,  .name = "DBE"},
-  {.id = SCLI_PARAM_ID_FLASH_ID,      .name = "FID"},
-  {.id = SCLI_PARAM_ID_FREQ,          .name = "FRQ"},
-  {.id = SCLI_PARAM_ID_SFACTOR,       .name = "SPF"},
-  {.id = SCLI_PARAM_ID_CODRATE,       .name = "CRT"},
-  {.id = SCLI_PARAM_ID_CRC,           .name = "CRC"},
-  {.id = SCLI_PARAM_ID_BANDWIDTH,     .name = "BDW"},
-  {.id = SCLI_PARAM_ID_ENTTX,         .name = "ETT"},
-  {.id = SCLI_PARAM_ID_CUSTOM_TX,     .name = "CTX"},
+  {.id = SCLI_PARAM_ID_LED_MODE,      .name = "LMD"},       // onboard led mode (default - blinking)
+  {.id = SCLI_PARAM_ID_LED_PERIOD,    .name = "LPR"},       // onboard led blinking period (default - 200ms)
+  {.id = SCLI_PARAM_ID_TIME,          .name = "TIM"},       // get system time; currently unused
+  {.id = SCLI_PARAM_ID_VERSION,       .name = "VER"},       // get version
+  {.id = SCLI_PARAM_ID_DEBUG_ENABLE,  .name = "DBE"},       // enable/disable debug output (default - disabled)
+  {.id = SCLI_PARAM_ID_FLASH_ID,      .name = "FID"},       // get id from SPI flash (if present)
+  {.id = SCLI_PARAM_ID_FREQ,          .name = "FRQ"},       // SX1278 center frequency (default - 465MHz)
+  {.id = SCLI_PARAM_ID_SFACTOR,       .name = "SPF"},       // SX1278 spreading factor (default - 8)
+  {.id = SCLI_PARAM_ID_CODRATE,       .name = "CRT"},       // SX1278 coding rate (default - 4/8)
+  {.id = SCLI_PARAM_ID_CRC,           .name = "CRC"},       // SX1278 payload CRC enable (default - enabled)
+  {.id = SCLI_PARAM_ID_BANDWIDTH,     .name = "BDW"},       // SX1278 bandwidth
+  {.id = SCLI_PARAM_ID_ENTTX,         .name = "ETT"},       // enable/disable text telemetry over SX1278
+  {.id = SCLI_PARAM_ID_CUSTOM_TX,     .name = "CTX"},       // send custom text
+  {.id = SCLI_PARAM_ID_FHSS_PERIOD,   .name = "FHS"},       // SX1278 FHSS period (default - 0 (disabled))
 };
 
 extern uint8_t usb_rx_buffer[APP_RX_DATA_SIZE];
@@ -39,6 +40,7 @@ static void scli_set_rx_error(uint8_t error_code);
 static void scli_print_version(void);
 static void scli_handle_error(void);
 
+// Handlers
 static void msg_led_mode_handler(uint8_t cmd, int data);
 static void msg_led_period_handler(uint8_t cmd, int data);
 static void msg_time_handler(uint8_t cmd, int data);
@@ -51,6 +53,7 @@ static void msg_crc_handler(uint8_t cmd, int data);
 static void msg_bw_handler(uint8_t cmd, int data);
 static void msg_entx_handler(uint8_t cmd, int data);
 static void msg_custom_tx_handler(uint8_t cmd, uint8_t* data, uint8_t len);
+static void msg_fhss_period_handler(uint8_t cmd, int data);
 
 #ifdef USE_SPI_FLASH
 static void msg_flash_handler(uint8_t cmd, int data);
@@ -268,13 +271,10 @@ static scli_pres_t scli_process_data(uint8_t* msg, param_id_t param_id, uint16_t
     msg_entx_handler(msg[SCLI_POS_CMD], data);
     break;
   case SCLI_PARAM_ID_CUSTOM_TX:
-    if((data_len < UINT8_MAX) && (data_len < SX1278_MAX_PACKET)){
-      uint8_t data_len_tmp = 0;
-      data_len_tmp += data_len;
-      msg_custom_tx_handler(msg[SCLI_POS_CMD], (uint8_t*)(msg+SCLI_HEADER_LEN+1), data_len_tmp);
-    }else{
-      cdc_msg_print("Error: Message is too long\r\n");
-    }
+    msg_custom_tx_handler(msg[SCLI_POS_CMD], (uint8_t*)(msg+SCLI_HEADER_LEN+1), data_len);
+    break;
+  case SCLI_PARAM_ID_FHSS_PERIOD:
+    msg_fhss_period_handler(msg[SCLI_POS_CMD], data);
     break;
   default:
     result = SCLI_PRES_ERROR;
@@ -455,9 +455,26 @@ static void msg_entx_handler(uint8_t cmd, int data)
 
 static void msg_custom_tx_handler(uint8_t cmd, uint8_t* data, uint8_t len)
 {
-  if(cmd == SCLI_SET){
-    radio_tx_custom_msg(data, len);
-  }else if(cmd == SCLI_GET){
+  if((len < UINT8_MAX) && (len < SX1278_MAX_PACKET)){
+    if(cmd == SCLI_SET){
+      radio_tx_custom_msg(data, len);
+    }else if(cmd == SCLI_GET){
+      // no get command
+    }
+  }else{
+    cdc_msg_print("Error: Message is too long\r\n");
+  }
+}
 
+static void msg_fhss_period_handler(uint8_t cmd, int data)
+{
+  if(cmd == SCLI_SET){
+    if(data <= UINT8_MAX){
+      radio_tx_set_fhss_period((uint8_t)data);
+    }else{
+      cdc_msg_print("ERROR: FHSS OOR\r\n");
+    }
+  }else if(cmd == SCLI_GET){
+    cdc_msg_print("SX1278 FHSS period: %d\r\n", radio_tx_get_fhss_period());
   }
 }

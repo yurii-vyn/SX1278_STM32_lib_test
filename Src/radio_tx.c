@@ -43,7 +43,7 @@ uint8_t radio_init(void)
 
   // initialize SX with basic parameters
   SX1278_init(&SX1278, SX1278_FREQ, SX1278_PWR, SX1278_SF,
-	              SX1278_BW, SX1278_CR, SX1278_LORA_CRC_EN, SX1278_PR_LEN, SX1278_LORA_SW, SX1278_PACKET_LEN);
+	              SX1278_BW, SX1278_CR, SX1278_LORA_CRC_EN, SX1278_PR_LEN, SX1278_LORA_SW, SX1278_FHSS, SX1278_PACKET_LEN);
   // wait for proper startup
   SX1278_hw_delay_ms(500); 
 #ifdef RADIO_MODE_TX
@@ -229,4 +229,14 @@ uint8_t radio_tx_custom_msg(uint8_t* msg, uint8_t len)
   radio_status = SX1278_transmit(&SX1278, msg, len, SX1278_TIMEOUT_MS);
 
   return radio_status;
+}
+
+void radio_tx_set_fhss_period(uint8_t period)
+{
+  SX1278_set_fhss_period(&SX1278, period);
+}
+
+uint8_t radio_tx_get_fhss_period(void)
+{
+  return SX1278.FHSS_period;
 }
