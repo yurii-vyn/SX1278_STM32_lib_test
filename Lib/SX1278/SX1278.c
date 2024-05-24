@@ -15,7 +15,7 @@ uint8_t SX1278_SPIRead(SX1278_t *module, uint8_t addr) {
 	uint8_t tmp;
 	SX1278_hw_spi_write_byte(module->hw, addr);
 	tmp = SX1278_hw_spi_read_byte(module->hw);
-	SX1278_hw_SetNSS(module->hw, 1);
+	SX1278_hw_unselect(module->hw);
 	return tmp;
 }
 
@@ -29,10 +29,10 @@ uint8_t SX1278_SPIRead(SX1278_t *module, uint8_t addr) {
  * \param[in]  cmd 		Data to write
  */
 void SX1278_SPIWrite(SX1278_t *module, uint8_t addr, uint8_t cmd) {
-	SX1278_hw_SetNSS(module->hw, 0);
+	SX1278_hw_select(module->hw);
 	SX1278_hw_spi_write_byte(module->hw, addr | 0x80);
 	SX1278_hw_spi_write_byte(module->hw, cmd);
-	SX1278_hw_SetNSS(module->hw, 1);
+	SX1278_hw_unselect(module->hw);
 }
 
 /**
@@ -51,12 +51,12 @@ void SX1278_SPIBurstRead(SX1278_t *module, uint8_t addr, uint8_t *rxBuf, uint8_t
 	if (length <= 1) {
 		return;
 	} else {
-		SX1278_hw_SetNSS(module->hw, 0);
+		SX1278_hw_select(module->hw);
 		SX1278_hw_spi_write_byte(module->hw, addr);
 		for (i = 0; i < length; i++) {
 			*(rxBuf + i) = SX1278_hw_spi_read_byte(module->hw);
 		}
-		SX1278_hw_SetNSS(module->hw, 1);
+		SX1278_hw_unselect(module->hw);
 	}
 }
 
@@ -76,13 +76,11 @@ void SX1278_SPIBurstWrite(SX1278_t *module, uint8_t addr, uint8_t *txBuf, uint8_
 	if (length <= 1) {
 		return;
 	} else {
-		// SX1278_hw_SetNSS(module->hw, 0);
     SX1278_hw_select(module->hw);
 		SX1278_hw_spi_write_byte(module->hw, addr | 0x80);
 		for (i = 0; i < length; i++) {
 			SX1278_hw_spi_write_byte(module->hw, *(txBuf + i));
 		}
-		// SX1278_hw_SetNSS(module->hw, 1);
     SX1278_hw_unselect(module->hw);
 	}
 }
