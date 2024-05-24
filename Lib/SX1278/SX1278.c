@@ -53,9 +53,13 @@ void SX1278_SPIBurstRead(SX1278_t *module, uint8_t addr, uint8_t *rxBuf, uint8_t
 	} else {
 		SX1278_hw_select(module->hw);
 		SX1278_hw_spi_write_byte(module->hw, addr);
+#ifndef SX1278_SPI_USE_DMA
 		for (i = 0; i < length; i++) {
 			*(rxBuf + i) = SX1278_hw_spi_read_byte(module->hw);
 		}
+#else
+    SX1278_hw_spi_read_dma(module->hw, rxBuf, length);
+#endif
 		SX1278_hw_unselect(module->hw);
 	}
 }
@@ -78,9 +82,13 @@ void SX1278_SPIBurstWrite(SX1278_t *module, uint8_t addr, uint8_t *txBuf, uint8_
 	} else {
     SX1278_hw_select(module->hw);
 		SX1278_hw_spi_write_byte(module->hw, addr | 0x80);
+#ifndef SX1278_SPI_USE_DMA
 		for (i = 0; i < length; i++) {
 			SX1278_hw_spi_write_byte(module->hw, *(txBuf + i));
 		}
+#else
+    SX1278_hw_spi_write_dma(module->hw, txBuf, length);
+#endif
     SX1278_hw_unselect(module->hw);
 	}
 }

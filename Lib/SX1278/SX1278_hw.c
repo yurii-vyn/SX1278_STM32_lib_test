@@ -45,7 +45,18 @@ void SX1278_hw_spi_write_byte(SX1278_hw_t *hw, uint8_t byte)
 {
   SX1278_hw_select(hw);
   HAL_SPI_Transmit(hw->spi, &byte, 1, SX1278_SPI_TIMEOUT);
-  while (HAL_SPI_GetState(hw->spi) != HAL_SPI_STATE_READY){};
+  while (HAL_SPI_GetState(hw->spi) != HAL_SPI_STATE_READY){
+    SX1278_hw_yield();
+  };
+}
+
+void SX1278_hw_spi_write_dma(SX1278_hw_t *hw, uint8_t *data, uint8_t len)
+{
+  SX1278_hw_select(hw);
+  HAL_SPI_Transmit_DMA(hw->spi, data, (uint16_t)len);
+  while (HAL_SPI_GetState(hw->spi) != HAL_SPI_STATE_READY){
+    SX1278_hw_yield();
+  };
 }
 
 uint8_t SX1278_hw_spi_read_byte(SX1278_hw_t *hw)
@@ -53,10 +64,26 @@ uint8_t SX1278_hw_spi_read_byte(SX1278_hw_t *hw)
 	uint8_t txByte = 0x00;
 	uint8_t rxByte = 0x00;
 
-	SX1278_hw_SetNSS(hw, 0);
+	SX1278_hw_select(hw);
 	HAL_SPI_TransmitReceive(hw->spi, &txByte, &rxByte, 1, SX1278_SPI_TIMEOUT);
-	while (HAL_SPI_GetState(hw->spi) != HAL_SPI_STATE_READY)
-		;
+	while (HAL_SPI_GetState(hw->spi) != HAL_SPI_STATE_READY){
+    SX1278_hw_yield();
+  };
+
+	return rxByte;
+}
+
+uint8_t SX1278_hw_spi_read_dma(SX1278_hw_t *hw, uint8_t *data, uint8_t len)
+{
+	uint8_t txByte = 0x00;
+	uint8_t rxByte = 0x00;
+
+	SX1278_hw_select(hw);
+	HAL_SPI_Receive_DMA(hw->spi, data, (uint16_t)len);
+	while (HAL_SPI_GetState(hw->spi) != HAL_SPI_STATE_READY){
+    SX1278_hw_yield();
+  };
+  
 	return rxByte;
 }
 
@@ -68,4 +95,9 @@ void SX1278_hw_delay_ms(uint32_t ms)
 int SX1278_hw_GetDIO0(SX1278_hw_t *hw)
 {
 	return (HAL_GPIO_ReadPin(hw->dio0.port, hw->dio0.pin) == GPIO_PIN_SET);
+}
+
+void SX1278_hw_yield(void)
+{
+  UNUSED(1);
 }

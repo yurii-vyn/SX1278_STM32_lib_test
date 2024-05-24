@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #define SX1278_SPI_TIMEOUT 1000
-#define SX1278_SPI_USE_DMA
+// #define SX1278_SPI_USE_DMA 1
 
 typedef struct {
 	int pin;
@@ -66,6 +66,8 @@ void SX1278_hw_reset(SX1278_hw_t *hw);
  */
 void SX1278_hw_spi_write_byte(SX1278_hw_t *hw, uint8_t cmd);
 
+void SX1278_hw_spi_write_dma(SX1278_hw_t *hw, uint8_t *data, uint8_t len);
+
 /**
  * \brief Reads data via SPI
  *
@@ -76,6 +78,8 @@ void SX1278_hw_spi_write_byte(SX1278_hw_t *hw, uint8_t cmd);
  * \return				Read value
  */
 uint8_t SX1278_hw_spi_read_byte(SX1278_hw_t *hw);
+
+uint8_t SX1278_hw_spi_read_dma(SX1278_hw_t *hw, uint8_t *data, uint8_t len);
 
 /**
  * \brief ms delay
@@ -96,6 +100,9 @@ void SX1278_hw_delay_ms(uint32_t ms);
  * \return				0 if DIO0 low, 1 if DIO high
  */
 int SX1278_hw_GetDIO0(SX1278_hw_t *hw);
+
+
+void SX1278_hw_yield(void);
 
 #endif // _SX1278_HW_H_
 

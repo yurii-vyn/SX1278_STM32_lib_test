@@ -6,7 +6,9 @@
     "w25qxx.h": "c",
     "usb_device.h": "c",
     "radio_tx.h": "c",
-    "sx1278.h": "c"
+    "sx1278.h": "c",
+    "sx127x_reg.h": "c",
+    "sx1278_hw.h": "c"
   },
   "cmake.configureOnOpen": false
 }
