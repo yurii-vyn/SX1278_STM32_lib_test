@@ -26,13 +26,13 @@ const scli_param_t scli_param_list[SCLI_PARAM_ID_CNT] = {
   {.id = SCLI_PARAM_ID_FHSS_PERIOD,   .name = "FHS"},       // SX1278 FHSS period (default - 0 (disabled))
 };
 
-extern uint8_t usb_rx_buffer[APP_RX_DATA_SIZE];
-scli_state_t scli_rx_sate = SCLI_RX_IDLE;
-scli_error_t scli_error = SCLI_ERR_CLEAR;
-scli_pres_t slii_parse_result = SCLI_PRES_ERROR;
+extern uint8_t UserRxBufferFS[APP_RX_DATA_SIZE];             // buffer for USB CDC (VCP) CLI
+scli_state_t scli_rx_sate = SCLI_RX_IDLE;                   // current state of cli rx state machine
+scli_error_t scli_error = SCLI_ERR_CLEAR;                   // error code if something went wrong
+scli_pres_t slii_parse_result = SCLI_PRES_ERROR;            // result of message parsing
 
 
-
+// Private functions
 static scli_pres_t scli_parse_msg(uint8_t* msg, uint32_t len);
 static param_id_t scli_get_param_id(uint8_t* msg_param);
 static scli_pres_t scli_process_data(uint8_t* msg, param_id_t param_id, uint16_t data_len);
@@ -63,7 +63,7 @@ static void msg_flash_handler(uint8_t cmd, int data);
 void scli_idle_task(void)
 {
   if(cdc_check_rx_msg() > 0){
-    slii_parse_result = scli_parse_msg(usb_rx_buffer, cdc_get_rx_len());
+    slii_parse_result = scli_parse_msg(UserRxBufferFS, cdc_get_rx_len());
     cdc_clear_rx_msg();
 
     if(slii_parse_result == SCLI_PRES_ERROR){
@@ -404,7 +404,7 @@ static void msg_sf_handler(uint8_t cmd, int data)
 {
   if(cmd == SCLI_SET){
     radio_tx_set_sf((uint8_t)data);
-    cdc_msg_print("SF set: %d\r\n", (uint8_t)data);
+    cdc_msg_print("SF set: %d\r\n", radio_tx_get_sf());
   }else if( cmd == SCLI_GET){
     cdc_msg_print("SX1278 SF: %d\r\n", radio_tx_get_sf());
   }
@@ -445,8 +445,10 @@ static void msg_entx_handler(uint8_t cmd, int data)
   if(cmd == SCLI_SET){
     if(data == 1){
       radio_tx_test_enable();
+      cdc_msg_print("Test telemetry enabled\r\n");
     }else if(data == 0){
       radio_tx_test_disable();
+      cdc_msg_print("Test telemetry disabled\r\n");
     }
   }else if(cmd == SCLI_GET){
 

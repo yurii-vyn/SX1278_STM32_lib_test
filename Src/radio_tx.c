@@ -222,7 +222,7 @@ uint64_t radio_tx_get_frequency(void)
 
 uint8_t radio_tx_get_sf(void)
 {
-  return SX1278.LoRa_SF;
+  return SX1278.LoRa_SF+RADIO_SF_MIN;
 }
 
 uint8_t radio_tx_get_cr(void)

@@ -7,21 +7,21 @@
 
 
 
-#define SCLI_PARAM_NAME_LEN     3
+#define SCLI_PARAM_NAME_LEN     3                         // parameter name length - if you cange this value, you should change all names in .c
 #define SCLI_HEADER_LEN         (SCLI_PARAM_NAME_LEN+3)
 #define SCLI_SERVICE_LEN        (SCLI_HEADER_LEN+1)
 
-#define SCLI_STX1         'Q'
-#define SCLI_STX2         'M'
-#define SCLI_ETX          '\n'
+#define SCLI_STX1               'Q'                       // message should start with "QM" 
+#define SCLI_STX2               'M'
+#define SCLI_ETX                '\n'                      // and end with LF
 
-#define SCLI_SET          '<'
-#define SCLI_GET          '>'
+#define SCLI_SET                '<'                       // for example, send "QM<SPF=8" (with auto LF on) to set SF to 8
+#define SCLI_GET                '>'                       // send "QM>SPF" to get current SF value in return
 
-#define SCLI_CMD_LED_ON     LED_MODE_ON
-#define SCLI_CMD_LED_OFF    LED_MODE_OFF
-#define SCLI_CMD_LED_TOGGLE 10
-#define SCLI_CMD_LED_BLINK  LED_MODE_BLINK
+#define SCLI_CMD_LED_ON         LED_MODE_ON
+#define SCLI_CMD_LED_OFF        LED_MODE_OFF
+#define SCLI_CMD_LED_TOGGLE     10
+#define SCLI_CMD_LED_BLINK      LED_MODE_BLINK
 
 
 typedef enum {
@@ -83,6 +83,12 @@ typedef struct scli_param{
   uint8_t name[SCLI_PARAM_NAME_LEN];
 } scli_param_t;
 
+
+/**
+ * Main CLI task
+ * 
+ * Should be always called from idle in order to not block anything else.
+*/
 void scli_idle_task(void);
 
 #endif // _SIMPLE_CLI_H_

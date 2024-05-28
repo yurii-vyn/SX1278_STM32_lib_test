@@ -11,7 +11,7 @@ extern uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
 extern USBD_HandleTypeDef hUsbDeviceFS;
 uint16_t cdc_tx_len = 0;
 
-uint8_t usb_rx_buffer[APP_RX_DATA_SIZE];
+// uint8_t usb_rx_buffer[APP_RX_DATA_SIZE];
 uint8_t cdc_msg_received = 0;
 uint32_t cdc_rx_len = 0;
 
@@ -69,7 +69,7 @@ void cdc_clear_rx_msg(void)
 
 void USB_CDC_RxHandler(uint8_t* Buf, uint32_t Len)
 {
-  memcpy(usb_rx_buffer, Buf, Len);
+  memcpy(UserRxBufferFS, Buf, Len);
   cdc_msg_received = 1;
   cdc_rx_len = Len;
 }
@@ -88,7 +88,7 @@ static void _cdc_clear_tx_buffer(void)
 
 static void _cdc_clear_rx_buffer(void)
 {
-  memset(usb_rx_buffer, 0x00, APP_RX_DATA_SIZE);
+  memset(UserRxBufferFS, 0x00, APP_RX_DATA_SIZE);
   cdc_rx_len = 0;
   cdc_msg_received = 0;
 }
